@@ -8,6 +8,8 @@ const mockTokenManager: any = {
   getNextToken: async () => null,
   markAsRateLimited: () => undefined,
   markAsForbidden: () => undefined,
+  markFromUpstreamError: () => undefined,
+  recordParityError: () => undefined,
 };
 
 const mockGeminiClient: any = {
@@ -225,7 +227,11 @@ async function validateRuntimeAnthropicRequestFromRealTokenManager(): Promise<vo
   await realTokenManager.onModuleInit();
 
   const tokenManagerProxy = {
-    getNextToken: async (options?: { sessionKey?: string; excludeAccountIds?: string[] }) => {
+    getNextToken: async (options?: {
+      sessionKey?: string;
+      excludeAccountIds?: string[];
+      model?: string;
+    }) => {
       observedGetNextTokenOptions = options ?? null;
       selectedToken = await realTokenManager.getNextToken(options);
       return selectedToken;
@@ -234,6 +240,14 @@ async function validateRuntimeAnthropicRequestFromRealTokenManager(): Promise<vo
       realTokenManager.markAsRateLimited(accountIdOrEmail),
     markAsForbidden: (accountIdOrEmail: string) =>
       realTokenManager.markAsForbidden(accountIdOrEmail),
+    markFromUpstreamError: (args: {
+      accountIdOrEmail: string;
+      status?: number;
+      retryAfter?: string;
+      body?: string;
+      model?: string;
+    }) => realTokenManager.markFromUpstreamError(args),
+    recordParityError: () => realTokenManager.recordParityError(),
   };
 
   try {
