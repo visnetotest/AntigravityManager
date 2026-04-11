@@ -2,6 +2,36 @@
 
 # Changelog
 
+## [0.11.0](https://github.com/Draculabo/AntigravityManager/compare/v0.10.0...v0.11.0) (2026-04-11)
+
+### ✨ Features
+
+* account management overhaul + 7 issue resolutions ([#147](https://github.com/Draculabo/AntigravityManager/issues/147)) ([ed0dd81](https://github.com/Draculabo/AntigravityManager/commit/ed0dd811a8958928a2702839db07444e89f9fdb2)), closes [#79](https://github.com/Draculabo/AntigravityManager/issues/79) [#126](https://github.com/Draculabo/AntigravityManager/issues/126) [#99](https://github.com/Draculabo/AntigravityManager/issues/99) [#145](https://github.com/Draculabo/AntigravityManager/issues/145) [#134](https://github.com/Draculabo/AntigravityManager/issues/134) [#53](https://github.com/Draculabo/AntigravityManager/issues/53) [#117](https://github.com/Draculabo/AntigravityManager/issues/117)
+* **antigravity:** add model specs and update mapping logic ([0a60c0e](https://github.com/Draculabo/AntigravityManager/commit/0a60c0eafa698202722be9c283cb52831e2e0179))
+* **cloud-oauth:** support selectable google oauth clients ([bcdf2a6](https://github.com/Draculabo/AntigravityManager/commit/bcdf2a6c24fc992d32b4ae883f2a34c8e64969e3))
+* **cloud-status:** classify blocked accounts and surface validation state ([388fbcb](https://github.com/Draculabo/AntigravityManager/commit/388fbcb2a9522285eb0bb4a541b48cd3e1049470))
+* **cloud-sync:** persist project and status metadata for synced accounts ([385036d](https://github.com/Draculabo/AntigravityManager/commit/385036d577495caeebf95301542811b08c9f333e))
+* **protobuf:** add unified state helpers for oauth payloads ([f970ccb](https://github.com/Draculabo/AntigravityManager/commit/f970ccb2ed1f3a3e9de09221895f0b650c1115b9))
+* **proxy:** add upstream error and rate-limit tracking support ([20fffff](https://github.com/Draculabo/AntigravityManager/commit/20fffff29c47d1147e9b429884d9e8b613e7da6f))
+* **proxy:** improve parity, rate limiting, and token scheduling ([5401e40](https://github.com/Draculabo/AntigravityManager/commit/5401e40943824d54bc95971229a83934e55ad88f))
+* **proxy:** improve quota fallback and proxy parity handling ([4fa0a3c](https://github.com/Draculabo/AntigravityManager/commit/4fa0a3c63dd4b973d0d07feb7351831ad827176d))
+* **ui:** update cloud account and provider visibility experience ([c95f494](https://github.com/Draculabo/AntigravityManager/commit/c95f494569b49ff1fae871970764c9f0a3fbda59))
+
+### 🐛 Bug Fixes
+
+* **cloud:** add missing oauth action bindings and validation status helper ([87c17a1](https://github.com/Draculabo/AntigravityManager/commit/87c17a1ed0856572f0f8c46ede923b563b726108))
+* **cloud:** fetch AI credits on startup with endpoint fallback and preserve cached credits ([61716bb](https://github.com/Draculabo/AntigravityManager/commit/61716bb51259c0a5899b8659aa864c5772b75cbb))
+* **linux:** dynamic executable path detection ([#121](https://github.com/Draculabo/AntigravityManager/issues/121)) ([30e38dc](https://github.com/Draculabo/AntigravityManager/commit/30e38dcb8b9329b68601c9df896fd815ccadc1ec))
+* **linux:** harden account-switch relaunch against GPU process crashes ([2c1755e](https://github.com/Draculabo/AntigravityManager/commit/2c1755e578ac91962e813a141ec7d3df6fa61a74))
+
+### 📝 Documentation
+
+* **proxyman:** add setup and debugging guides and link them from readmes ([3100db9](https://github.com/Draculabo/AntigravityManager/commit/3100db93ed92f9f8ef19aceae49a699768e20ca9))
+
+### ✅ Tests
+
+* **proxy:**  refine signature test text ([50a325b](https://github.com/Draculabo/AntigravityManager/commit/50a325be113ef59dd9d0144b84d64f9eb40ea67a))
+
 ## [0.10.0](https://github.com/Draculabo/AntigravityManager/compare/v0.9.2...v0.10.0) (2026-02-19)
 
 ### ✨ Features
