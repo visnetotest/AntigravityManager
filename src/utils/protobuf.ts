@@ -1,4 +1,15 @@
 export class ProtobufUtils {
+  private static concatBytes(...parts: Uint8Array[]): Uint8Array {
+    const totalLength = parts.reduce((sum, part) => sum + part.length, 0);
+    const merged = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const part of parts) {
+      merged.set(part, offset);
+      offset += part.length;
+    }
+    return merged;
+  }
+
   static encodeVarint(value: number): Uint8Array {
     // Note: Javascript bitwise operators treat operands as 32-bit integers.
     // However, for typical token lengths and small field IDs, this is fine.
@@ -111,6 +122,13 @@ export class ProtobufUtils {
     return this.encodeLenDelimField(fieldNum, bytes);
   }
 
+  static encodeVarintField(fieldNum: number, value: number): Uint8Array {
+    const tag = (fieldNum << 3) | 0;
+    const tagBytes = this.encodeVarint(tag);
+    const valueBytes = this.encodeVarint(value);
+    return this.concatBytes(tagBytes, valueBytes);
+  }
+
   // Create timestamp field (Field 4 -> Field 1 varint)
   static createTimestampField(fieldNum: number, seconds: number): Uint8Array {
     // Timestamp message format: Field 1 (seconds) as varint
@@ -217,7 +235,12 @@ export class ProtobufUtils {
     return result;
   }
 
-  static createOAuthInfo(accessToken: string, refreshToken: string, expiry: number): Uint8Array {
+  static createOAuthInfo(
+    accessToken: string,
+    refreshToken: string,
+    expiry: number,
+    isGcpTos = true,
+  ): Uint8Array {
     const field1 = this.encodeStringField(1, accessToken);
     const field2 = this.encodeStringField(2, 'Bearer');
     const field3 = this.encodeStringField(3, refreshToken);
@@ -230,12 +253,16 @@ export class ProtobufUtils {
     timestampMsg.set(secondsBytes, tagBytes.length);
 
     const field4 = this.encodeLenDelimField(4, timestampMsg);
+    const field6 = isGcpTos ? this.encodeVarintField(6, 1) : new Uint8Array();
 
-    const combined = new Uint8Array(field1.length + field2.length + field3.length + field4.length);
+    const combined = new Uint8Array(
+      field1.length + field2.length + field3.length + field4.length + field6.length,
+    );
     combined.set(field1, 0);
     combined.set(field2, field1.length);
     combined.set(field3, field1.length + field2.length);
     combined.set(field4, field1.length + field2.length + field3.length);
+    combined.set(field6, field1.length + field2.length + field3.length + field4.length);
     return combined;
   }
 
@@ -243,20 +270,10 @@ export class ProtobufUtils {
     accessToken: string,
     refreshToken: string,
     expiry: number,
+    isGcpTos = true,
   ): string {
-    const oauthInfo = this.createOAuthInfo(accessToken, refreshToken, expiry);
-    const oauthInfoB64 = Buffer.from(oauthInfo).toString('base64');
-
-    const inner2 = this.encodeStringField(1, oauthInfoB64);
-    const inner1 = this.encodeStringField(1, 'oauthTokenInfoSentinelKey');
-    const innerField2 = this.encodeLenDelimField(2, inner2);
-
-    const inner = new Uint8Array(inner1.length + innerField2.length);
-    inner.set(inner1, 0);
-    inner.set(innerField2, inner1.length);
-
-    const outer = this.encodeLenDelimField(1, inner);
-    return Buffer.from(outer).toString('base64');
+    const oauthInfo = this.createOAuthInfo(accessToken, refreshToken, expiry, isGcpTos);
+    return this.createUnifiedStateEntry('oauthTokenInfoSentinelKey', oauthInfo);
   }
 
   static extractOAuthTokenInfoFromOAuthInfo(
@@ -277,29 +294,183 @@ export class ProtobufUtils {
   static extractOAuthTokenInfoFromUnifiedState(
     data: Uint8Array,
   ): { accessToken: string; refreshToken: string } | null {
-    const inner = this.getField(data, 1);
-    if (!inner) {
-      return null;
-    }
-
-    const inner2 = this.getField(inner, 2);
-    if (!inner2) {
-      return null;
-    }
-
-    const oauthInfoB64Bytes = this.getField(inner2, 1);
-    if (!oauthInfoB64Bytes) {
-      return null;
-    }
-
-    const oauthInfoB64 = this.readString(oauthInfoB64Bytes);
-    let oauthInfoBytes: Uint8Array;
+    let decoded: { sentinelKey: string; payload: Uint8Array };
     try {
-      oauthInfoBytes = new Uint8Array(Buffer.from(oauthInfoB64, 'base64'));
+      decoded = this.decodeTopicRowPayload(data);
+    } catch {
+      try {
+        decoded = this.decodeLegacyUnifiedStateEntry(data);
+      } catch {
+        return null;
+      }
+    }
+
+    if (decoded.sentinelKey !== 'oauthTokenInfoSentinelKey') {
+      return null;
+    }
+
+    const directParsed = this.extractOAuthTokenInfoFromOAuthInfo(decoded.payload);
+    if (directParsed) {
+      return directParsed;
+    }
+    const nestedOauthInfoB64Bytes = this.getField(decoded.payload, 1);
+    if (!nestedOauthInfoB64Bytes) {
+      return null;
+    }
+
+    try {
+      const nestedOauthInfoBytes = new Uint8Array(
+        Buffer.from(this.readString(nestedOauthInfoB64Bytes), 'base64'),
+      );
+      return this.extractOAuthTokenInfoFromOAuthInfo(nestedOauthInfoBytes);
     } catch {
       return null;
     }
+  }
 
-    return this.extractOAuthTokenInfoFromOAuthInfo(oauthInfoBytes);
+  private static decodeLegacyBase64PayloadIfNeeded(payload: Uint8Array): Uint8Array {
+    if (payload.length === 0 || payload.length % 4 !== 0) {
+      return payload;
+    }
+
+    let looksLikeBase64 = true;
+    for (const byte of payload) {
+      const isBase64Byte =
+        (byte >= 65 && byte <= 90) ||
+        (byte >= 97 && byte <= 122) ||
+        (byte >= 48 && byte <= 57) ||
+        byte === 43 ||
+        byte === 47 ||
+        byte === 61;
+      if (!isBase64Byte) {
+        looksLikeBase64 = false;
+        break;
+      }
+    }
+
+    if (!looksLikeBase64) {
+      return payload;
+    }
+
+    try {
+      const encoded = Buffer.from(payload).toString('utf8');
+      const decoded = new Uint8Array(Buffer.from(encoded, 'base64'));
+      if (decoded.length === 0) {
+        return payload;
+      }
+      return decoded;
+    } catch {
+      return payload;
+    }
+  }
+
+  private static decodeTopicRowPayload(topicBlob: Uint8Array): {
+    sentinelKey: string;
+    payload: Uint8Array;
+  } {
+    const dataEntry = this.getField(topicBlob, 1);
+    if (!dataEntry) {
+      throw new Error('Topic data entry not found');
+    }
+
+    const sentinelKeyBytes = this.getField(dataEntry, 1);
+    if (!sentinelKeyBytes) {
+      throw new Error('Topic data entry key not found');
+    }
+
+    const rowBlob = this.getField(dataEntry, 2);
+    if (!rowBlob) {
+      throw new Error('Topic row not found');
+    }
+
+    const encodedPayloadBytes = this.getField(rowBlob, 1);
+    if (!encodedPayloadBytes) {
+      throw new Error('Topic row value not found');
+    }
+
+    const sentinelKey = this.readString(sentinelKeyBytes);
+    const encodedPayload = this.readString(encodedPayloadBytes);
+    const payload = new Uint8Array(Buffer.from(encodedPayload, 'base64'));
+
+    return { sentinelKey, payload };
+  }
+
+  private static decodeLegacyUnifiedStateEntry(outerBlob: Uint8Array): {
+    sentinelKey: string;
+    payload: Uint8Array;
+  } {
+    const innerBlob = this.getField(outerBlob, 1);
+    if (!innerBlob) {
+      throw new Error('Outer Field 1 not found');
+    }
+
+    const sentinelKeyBytes = this.getField(innerBlob, 1);
+    if (!sentinelKeyBytes) {
+      throw new Error('Inner Field 1 not found');
+    }
+
+    const payload = this.getField(innerBlob, 2);
+    if (!payload) {
+      throw new Error('Inner Field 2 not found');
+    }
+
+    return {
+      sentinelKey: this.readString(sentinelKeyBytes),
+      payload: this.decodeLegacyBase64PayloadIfNeeded(payload),
+    };
+  }
+
+  static createUnifiedStateEntry(sentinelKey: string, payload: Uint8Array): string {
+    const row = this.encodeStringField(1, Buffer.from(payload).toString('base64'));
+    const dataEntry = this.concatBytes(
+      this.encodeStringField(1, sentinelKey),
+      this.encodeLenDelimField(2, row),
+    );
+    const topic = this.encodeLenDelimField(1, dataEntry);
+    return Buffer.from(topic).toString('base64');
+  }
+
+  static decodeUnifiedStateEntry(outerB64: string): { sentinelKey: string; payload: Uint8Array } {
+    const outerBlob = new Uint8Array(Buffer.from(outerB64, 'base64'));
+
+    try {
+      return this.decodeTopicRowPayload(outerBlob);
+    } catch {
+      return this.decodeLegacyUnifiedStateEntry(outerBlob);
+    }
+  }
+
+  static findVarintField(data: Uint8Array, targetField: number): number | null {
+    let offset = 0;
+    while (offset < data.length) {
+      const { value: tag, nextOffset } = this.readVarint(data, offset);
+      const wireType = Number(tag & 7n);
+      const currentField = Number(tag >> 3n);
+
+      if (currentField === targetField && wireType === 0) {
+        const { value } = this.readVarint(data, nextOffset);
+        return Number(value);
+      }
+
+      offset = this.skipField(data, nextOffset, wireType);
+    }
+
+    return null;
+  }
+
+  static createStringValuePayload(value: string): Uint8Array {
+    return this.encodeStringField(3, value);
+  }
+
+  static createMinimalUserStatusPayload(email: string): Uint8Array {
+    return this.concatBytes(this.encodeStringField(3, email), this.encodeStringField(7, email));
+  }
+
+  static extractOAuthTokenInfoFromUnifiedStateEntry(
+    outerB64: string,
+  ): { accessToken: string; refreshToken: string } | null {
+    return this.extractOAuthTokenInfoFromUnifiedState(
+      new Uint8Array(Buffer.from(outerB64, 'base64')),
+    );
   }
 }
