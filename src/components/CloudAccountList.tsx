@@ -74,6 +74,7 @@ import {
 import { filter, flatMap, isEmpty, isNumber, size, sumBy } from 'lodash-es';
 import {
   clampQuotaPercentage,
+  formatAiCreditsAmount,
   getQuotaStatus,
   roundQuotaPercentage,
   getAccountSortValue,
@@ -317,7 +318,7 @@ export function CloudAccountList() {
             toast({
               title: t('cloud.toast.quotaRefreshed'),
               description: t('cloud.toast.refreshCreditsAvailable', {
-                amount: credits.toFixed(2),
+                amount: formatAiCreditsAmount(credits),
               }),
             });
             return;

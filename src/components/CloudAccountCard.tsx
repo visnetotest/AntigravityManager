@@ -29,6 +29,7 @@ import { useProviderGrouping } from '@/hooks/useProviderGrouping';
 import { ProviderGroup } from '@/components/ProviderGroup';
 import {
   clampQuotaPercentage,
+  formatAiCreditsAmount,
   formatResetTimeLabel,
   formatResetTimeTitle,
   getQuotaStatus,
@@ -80,6 +81,19 @@ function isGeminiProLowModel(modelName: string): boolean {
 function isGeminiProHighModel(modelName: string): boolean {
   const normalizedModelName = modelName.toLowerCase();
   return normalizedModelName.includes('gemini-3.1-pro-high');
+}
+
+function formatCreditsExpiry(expiryDate: string): string {
+  if (!expiryDate) {
+    return '';
+  }
+
+  try {
+    const date = new Date(expiryDate);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
+    return expiryDate;
+  }
 }
 
 function isGeminiProFamilyModel(modelName: string): boolean {
@@ -325,17 +339,8 @@ export function CloudAccountCard({
     );
 
   const aiCredits = account.quota?.ai_credits;
-  const shouldShowAiCredits = !!aiCredits && Number.isFinite(aiCredits.credits) && aiCredits.credits >= 0;
-
-  const formatCreditsExpiry = (expiryDate: string) => {
-    if (!expiryDate) return '';
-    try {
-      const date = new Date(expiryDate);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-      return expiryDate;
-    }
-  };
+  const shouldShowAiCredits =
+    !!aiCredits && Number.isFinite(aiCredits.credits) && aiCredits.credits >= 0;
 
   const validationBlockedStatusLabel = getValidationBlockedStatusLabel(
     account.status,
@@ -379,7 +384,7 @@ export function CloudAccountCard({
 
           {shouldShowAiCredits && aiCredits && (
             <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-amber-500">
-              <span>${aiCredits.credits.toFixed(2)}</span>
+              <span>{formatAiCreditsAmount(aiCredits.credits)}</span>
               {aiCredits.expiryDate && (
                 <span className="text-muted-foreground opacity-70">
                   ·{' '}
@@ -635,17 +640,8 @@ export function CompactCloudAccountCard({
   );
 
   const aiCredits = account.quota?.ai_credits;
-  const shouldShowAiCredits = !!aiCredits && Number.isFinite(aiCredits.credits) && aiCredits.credits >= 0;
-
-  const formatCreditsExpiry = (expiryDate: string) => {
-    if (!expiryDate) return '';
-    try {
-      const date = new Date(expiryDate);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-      return expiryDate;
-    }
-  };
+  const shouldShowAiCredits =
+    !!aiCredits && Number.isFinite(aiCredits.credits) && aiCredits.credits >= 0;
 
   const validationBlockedStatusLabel = getValidationBlockedStatusLabel(
     account.status,
@@ -695,12 +691,14 @@ export function CompactCloudAccountCard({
         <div className="text-muted-foreground flex items-center gap-3 text-xs">
           <span className="truncate">{account.email}</span>
           {validationBlockedStatusLabel && (
-            <span className="text-destructive shrink-0 font-medium">{validationBlockedStatusLabel}</span>
+            <span className="text-destructive shrink-0 font-medium">
+              {validationBlockedStatusLabel}
+            </span>
           )}
 
           {shouldShowAiCredits && aiCredits && (
             <span className="shrink-0 text-amber-500">
-              ${aiCredits.credits.toFixed(2)}
+              {formatAiCreditsAmount(aiCredits.credits)}
               {aiCredits.expiryDate && (
                 <span className="text-muted-foreground">
                   {' '}

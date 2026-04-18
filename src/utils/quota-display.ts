@@ -31,6 +31,12 @@ export function roundQuotaPercentage(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+export function formatAiCreditsAmount(credits: number): string {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+  }).format(credits);
+}
+
 export function formatTimeRemaining(dateStr: string): string | null {
   const targetDate = new Date(dateStr);
   if (Number.isNaN(targetDate.getTime())) {

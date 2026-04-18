@@ -33,9 +33,6 @@ const QUOTA_API_ENDPOINTS = [
   'https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels',
 ] as const;
 
-// Internal API masquerading
-const USER_AGENT = 'antigravity/1.11.3 Darwin/arm64';
-
 // Request timeout in milliseconds (30 seconds)
 const REQUEST_TIMEOUT_MS = 30000;
 
@@ -898,7 +895,7 @@ export class GoogleAPIService {
 
       const fallbackData = (await fallbackResponse.json()) as LoadProjectResponse;
       return extractAiCreditsFromProjectContext(fallbackData);
-    } catch (e) {
+    } catch {
       return null;
     }
   }

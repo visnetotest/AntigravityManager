@@ -54,7 +54,10 @@ function normalizeProjectId(projectId?: string): string | null {
   return normalized === '' ? null : normalized;
 }
 
-function recoverCachedQuotaOnRateLimit(account: CloudAccount, error: unknown): CloudAccount['quota'] | null {
+function recoverCachedQuotaOnRateLimit(
+  account: CloudAccount,
+  error: unknown,
+): CloudAccount['quota'] | null {
   const classified = classifyAccountStatusFromError(error);
   if (!classified || classified.status !== 'rate_limited') {
     return null;
@@ -148,7 +151,10 @@ async function clearAccountStatus(account: CloudAccount): Promise<void> {
 }
 
 function hydrateActiveOAuthClientFromSettings(): void {
-  const preferredClientKey = CloudAccountRepo.getSetting<string>(ACTIVE_OAUTH_CLIENT_KEY_SETTING, '');
+  const preferredClientKey = CloudAccountRepo.getSetting<string>(
+    ACTIVE_OAUTH_CLIENT_KEY_SETTING,
+    '',
+  );
   if (isString(preferredClientKey) && !isEmpty(preferredClientKey.trim())) {
     try {
       GoogleAPIService.setActiveOAuthClientKey(preferredClientKey);
@@ -165,7 +171,10 @@ function hydrateActiveOAuthClientFromSettings(): void {
 async function backfillMissingOAuthClientKeyForLegacyAccounts(
   accounts: CloudAccount[],
 ): Promise<boolean> {
-  const backfillDone = CloudAccountRepo.getSetting<boolean>(OAUTH_CLIENT_KEY_BACKFILL_DONE_SETTING, false);
+  const backfillDone = CloudAccountRepo.getSetting<boolean>(
+    OAUTH_CLIENT_KEY_BACKFILL_DONE_SETTING,
+    false,
+  );
   if (backfillDone) {
     return false;
   }
@@ -282,7 +291,10 @@ export async function addGoogleAccount(
     try {
       const quota = await GoogleAPIService.fetchQuota(account.token.access_token);
       try {
-        const aiCredits = await GoogleAPIService.fetchAICredits(account.token.access_token);
+        const aiCredits = await GoogleAPIService.fetchAICredits(
+          account.token.access_token,
+          undefined,
+        );
         if (aiCredits) {
           quota.ai_credits = aiCredits;
         } else {
@@ -708,7 +720,10 @@ export function getActiveOAuthClient(): string {
 
 export function setActiveOAuthClient(clientKey: string): void {
   GoogleAPIService.setActiveOAuthClientKey(clientKey);
-  CloudAccountRepo.setSetting(ACTIVE_OAUTH_CLIENT_KEY_SETTING, GoogleAPIService.getActiveOAuthClientKey());
+  CloudAccountRepo.setSetting(
+    ACTIVE_OAUTH_CLIENT_KEY_SETTING,
+    GoogleAPIService.getActiveOAuthClientKey(),
+  );
 }
 
 export async function exportCloudAccounts(stripTokens = false): Promise<string> {
