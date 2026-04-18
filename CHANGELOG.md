@@ -2,6 +2,23 @@
 
 # Changelog
 
+## [0.11.1](https://github.com/Draculabo/AntigravityManager/compare/v0.11.0...v0.11.1) (2026-04-18)
+
+### 🐛 Bug Fixes
+
+* add unit label to AI credit display ([6577f1c](https://github.com/Draculabo/AntigravityManager/commit/6577f1c51fd155004b81f6171eb5feffa2448128))
+* remaining localization gaps ([#156](https://github.com/Draculabo/AntigravityManager/issues/156)) ([7093c98](https://github.com/Draculabo/AntigravityManager/commit/7093c982ba790380cda7d1e8a53891970df6b3cf))
+* remove AI credit refresh time scraping ([3e1e10b](https://github.com/Draculabo/AntigravityManager/commit/3e1e10b2a580ebf5a64b9a8982bd812a6a1f2924))
+
+### 📝 Documentation
+
+* **repo:** update project docs ([440a934](https://github.com/Draculabo/AntigravityManager/commit/440a9342800f244287c758b1a77a05fac9096df7))
+
+### ♻️ Code Refactoring
+
+* **ipc:** migrate renderer IPC client to official oRPC client ([d0c282d](https://github.com/Draculabo/AntigravityManager/commit/d0c282dffff24bb74a81cfa523f2f72f949bf8f9))
+* standardize runtime guard patterns with lodash-es ([#154](https://github.com/Draculabo/AntigravityManager/issues/154)) ([bc35b96](https://github.com/Draculabo/AntigravityManager/commit/bc35b96b5d2d873cf0f187a57de695aedc32108f))
+
 ## [0.11.0](https://github.com/Draculabo/AntigravityManager/compare/v0.10.0...v0.11.0) (2026-04-11)
 
 ### ✨ Features
