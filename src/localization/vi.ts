@@ -307,6 +307,7 @@ const vi = {
       proxySaved: 'Đã lưu proxy',
       noProxy: 'Không dùng proxy',
       aiCredits: 'AI Credits',
+      aiCreditsValue: '{{amount}} credits',
       creditsExpiry: 'hết hạn {{date}}',
       modelVisibility: 'Hiển thị model',
     },
@@ -370,7 +371,7 @@ const vi = {
       updateSettingsFailed: 'Không thể cập nhật cài đặt',
       actionFailed: 'Không thể thực hiện thao tác',
       startAuthFailed: 'Không thể bắt đầu luồng đăng nhập',
-      refreshCreditsAvailable: 'AI credits: ${{amount}}',
+      refreshCreditsAvailable: 'AI credits: {{amount}}',
       refreshCreditsUnavailable: 'Không có thông tin AI credits cho lần làm mới này.',
       batchRefreshSuccess: 'Đã làm mới thành công {{count}} tài khoản.',
       batchRefreshPartial: {

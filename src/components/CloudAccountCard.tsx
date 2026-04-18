@@ -383,8 +383,12 @@ export function CloudAccountCard({
           <CardDescription className="truncate text-xs">{account.email}</CardDescription>
 
           {shouldShowAiCredits && aiCredits && (
-            <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-amber-500">
-              <span>{formatAiCreditsAmount(aiCredits.credits)}</span>
+            <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-blue-500">
+              <span>
+                {t('cloud.card.aiCreditsValue', {
+                  amount: formatAiCreditsAmount(aiCredits.credits),
+                })}
+              </span>
               {aiCredits.expiryDate && (
                 <span className="text-muted-foreground opacity-70">
                   ·{' '}
@@ -697,8 +701,10 @@ export function CompactCloudAccountCard({
           )}
 
           {shouldShowAiCredits && aiCredits && (
-            <span className="shrink-0 text-amber-500">
-              {formatAiCreditsAmount(aiCredits.credits)}
+            <span className="shrink-0 text-blue-500">
+              {t('cloud.card.aiCreditsValue', {
+                amount: formatAiCreditsAmount(aiCredits.credits),
+              })}
               {aiCredits.expiryDate && (
                 <span className="text-muted-foreground">
                   {' '}
