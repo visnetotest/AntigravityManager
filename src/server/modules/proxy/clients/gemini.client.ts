@@ -154,7 +154,7 @@ export class GeminiClient {
 
   private getInternalTimeoutMs(): number {
     const config = getServerConfig();
-    const timeoutSeconds = config?.request_timeout ?? 60;
+    const timeoutSeconds = config?.request_timeout ?? 300;
     return Math.max(1, timeoutSeconds) * 1000;
   }
 
